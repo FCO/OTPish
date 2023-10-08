@@ -14,12 +14,13 @@
   "provides": {
     "OTPish": "lib/OTPish.rakumod",
     "OTPish::Agent": "lib/OTPish/Agent.rakumod",
+    "OTPish::GenServer": "lib/OTPish/GenServer.rakumod",
     "OTPish::Process": "lib/OTPish/Process.rakumod",
     "OTPish::Task": "lib/OTPish/Task.rakumod"
   },
   "resources": [
   ],
-  "source-url": "",
+  "source-url": "https://github.com/FCO/OTPish.git",
   "tags": [
   ],
   "test-depends": [
