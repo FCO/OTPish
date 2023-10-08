@@ -1,0 +1,28 @@
+{
+  "auth": "zef:FCO",
+  "authors": [
+    "Fernando Corrêa"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A Elixir's OTP's copy for Raku",
+  "license": "Artistic-2.0",
+  "name": "OTPish",
+  "perl": "6.d",
+  "provides": {
+    "OTPish": "lib/OTPish.rakumod",
+    "OTPish::Agent": "lib/OTPish/Agent.rakumod",
+    "OTPish::Process": "lib/OTPish/Process.rakumod",
+    "OTPish::Task": "lib/OTPish/Task.rakumod"
+  },
+  "resources": [
+  ],
+  "source-url": "",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
+}
