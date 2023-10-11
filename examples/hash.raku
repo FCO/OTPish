@@ -1,4 +1,5 @@
 use OTPish::Process;
+use OTPish::Task;
 use OTPish::Agent;
 
 class OTPish::Hash is OTPish::Agent does Associative {
@@ -24,7 +25,13 @@ class OTPish::Hash is OTPish::Agent does Associative {
 }
 
 main-process {
-    my %hash := OTPish::Hash.new;                  # Create a new Hash as an implementation of Agent
-    ^1000 .race(:1batch).map: { %hash{$_} = True } # Insert 1000 pairs in parallel (no race condition)
-    say %hash.keys.elems                           # 1000
+    my %hash := OTPish::Hash.new;    # Create a new Hash as an implementation of Agent
+    %hash.spawn;
+    my @tasks = do for ^100 {
+        async {
+            %hash{$_} = True;        # queue 100 pairs to be inserted
+        }
+    }
+    @tasks>>.await;
+    say %hash.keys.elems             # 1000
 }

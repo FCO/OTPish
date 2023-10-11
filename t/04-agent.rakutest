@@ -1,0 +1,46 @@
+use Test;
+use OTPish::Agent;
+use OTPish::Process;
+
+main-process {
+  CATCH {
+    default {
+      .say
+    }
+  }
+  isa-ok OTPish::Agent, OTPish::Process;
+  my $a = OTPish::Agent.new;
+  $a.spawn;
+
+  ok $a.alive, "is alive";
+
+  isa-ok $a, OTPish::Agent;
+
+  $a.update: { 42 }
+
+  is $a.get({ $_ }), 42, "get the right value set by update";
+
+  is $a.get-and-update({ 13, 3.14 }), 13, "returns the right value from get-and-update";
+
+  is $a.get({ $_ }), 3.14, "get-and-update set the right value";
+
+  $a.update: { "" }
+  my @proms = do for ^10 {
+    start $a.update: -> $status { $status ~ "test" }
+  }
+
+  await @proms;
+
+  ok $a.alive, "alive?";
+  is $a.get({ $_ }), "test" x 10, "Set the last value";
+  ok $a.alive, "alive?";
+
+  my @resp = await do for ^10 {
+    start { $a.get: *.substr: 0, 4 }
+  }
+  dd @resp;
+
+  is-deeply @resp, ["test" xx 10];
+}
+
+done-testing

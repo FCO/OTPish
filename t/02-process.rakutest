@@ -1,0 +1,73 @@
+use Test;
+use OTPish::Process;
+
+my $p = spawn { sleep 1 }
+
+isa-ok $p, OTPish::Process;
+ok $p.alive;
+
+subtest "receive" => {
+  my Channel $channel .= new;
+  my atomicint $i = 0;
+
+  $channel.send: \( 42 );
+
+  receive :$channel, -> 42 { $i⚛++ }, -> | { flunk "wrong reveive" }
+  is $i, 1;
+}
+
+subtest "receive last value" => {
+  my Channel $channel .= new;
+  my atomicint $i = 0;
+
+  $channel.send( \( 13 )) xx 1000;
+  $channel.send: \( 42 );
+
+  receive :$channel, -> 42 { $i⚛++ }
+  is $i, 1, "found 42 only once";
+  is($channel.receive, \( 13 ), "other values still there") xx 1000;
+}
+
+subtest "reveive parallel sending" => {
+  my Channel $channel .= new;
+  my atomicint $i = 0;
+  start {
+    for ^1000 {
+      start $channel.send: \( 13 );
+      start $channel.send: \( 42 );
+    }
+  }
+
+  for ^1000 {
+    receive :$channel, -> 42 { $i⚛++ }
+  }
+  is $i, 1000;
+  is($channel.receive, \( 13 ), "differnent values still there") xx 1000;
+}
+
+subtest "Process" => {
+  my atomicint $i = 0;
+  my OTPish::Process $p1 = spawn {
+    receive -> 42 { $i⚛++ }, -> | { flunk "wrong reveive" }
+    is $i, 1, "42 is there only once";
+  }
+
+  $p1.send: \( 42 );
+  await $p1.prom;
+  is $i, 1, "42 is there only once";
+}
+
+subtest "Process parallel" => {
+  my atomicint $i = 0;
+  my OTPish::Process @p = do for ^1000 {
+    spawn {
+      receive -> 42 { $i⚛++ }, -> | {  "wrong reveive" }
+    }
+  }
+
+  @p>>.send: \( 42 );
+  await @p>>.prom;
+  is $i, 1000, "there are 1000 processes";
+}
+
+done-testing;

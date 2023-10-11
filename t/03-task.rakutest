@@ -1,0 +1,40 @@
+use Test;
+use OTPish::Task;
+use OTPish::Process;
+
+isa-ok OTPish::Task, OTPish::Process;
+
+main-process {
+  subtest "single" => {
+    my $t = async {
+      42
+    }
+
+    isa-ok $t, OTPish::Task;
+
+    is $t.await, 42;
+  }
+
+  subtest "multiple" => {
+    my @t = async({
+      42
+    }) xx 1000;
+
+    isa-ok $_, OTPish::Task for @t;
+
+    is $_, 42 for @t>>.await;
+  }
+
+  subtest "multiple with sleep" => {
+    my @t = async({
+      await Promise.in: 1;
+      42
+    }) xx 1000;
+
+    isa-ok $_, OTPish::Task for @t;
+
+    is $_, 42 for @t>>.await;
+  }
+}
+
+done-testing

@@ -1,14 +1,19 @@
 use OTPish;
 unit class OTPish::Process does OTPish;
 
-sub receive(*@f) is export {
+sub receive(*@f, Channel :$channel = $*OTPish-PROCESS.channel) is export {
     loop {
-        given $*OTPish-PROCESS.channel.receive {
+        my $last;
+        given $channel.receive -> \res {
             for @f -> &func {
-                when .Capture ~~ &func.signature {
-                    return func |$_;
+                when res.Capture ~~ &func.signature {
+                    return func |res;
                 }
             }
+            $last = res
+        }
+        Promise.in(0.1).then: {
+            $channel.send: $last
         }
     }
 }
@@ -18,18 +23,26 @@ my atomicint $next-id = 0;
 has UInt     $.id = $next-id++;
 has          &.code;
 has Promise  $.prom;
-has Channel  $.channel handles <send> .= new;
+has Channel  $.channel .= new;
 has ::?CLASS $.parent;
+has Lock     $!lock .= new;
 
-multi method gist(::?CLASS:D:) { "{ self.^name }-{ $!id }" }
+method send(|c) {
+    $!lock.protect: { $!channel.send: |c }
+}
 
-method alive { $!prom.status !~~ Planned }
+method pid(::?CLASS:D:) { "{ self.^name }-{ $!id }" }
+
+multi method gist(::?CLASS:D:) { $.pid }
+
+method alive { $!prom.status ~~ Planned }
 
 multi method spawn(::?CLASS:D:) {
     $!prom = start {
         my $*OTPish-PROCESS = self;
-        &!code.()
+        &!code.();
     }
+    self
 }
 
 multi method spawn(::?CLASS:U: &code) {
