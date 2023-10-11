@@ -38,7 +38,6 @@ main-process {
   my @resp = await do for ^10 {
     start { $a.get: *.substr: 0, 4 }
   }
-  dd @resp;
 
   is-deeply @resp, ["test" xx 10];
 }
